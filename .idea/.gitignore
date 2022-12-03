@@ -8,3 +8,13 @@
 /dataSources.local.xml
 # Zeppelin ignored files
 /ZeppelinRemoteNotebooks/
+/sonarlint/
+
+/codeStyles/codeStyleConfig.xml
+/git_toolbox_prj.xml
+/hotswap_agent.xml
+/jpa-buddy.xml
+/kotlinc.xml
+/codeStyles/Project.xml
+/inspectionProfiles/Project_Default.xml
+/uiDesigner.xml
