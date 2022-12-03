@@ -5,6 +5,8 @@ import kotlin.streams.toList
 
 fun main() {
     print(calculateScore())
+    println()
+    print(calculateGroupScore())
 }
 
 fun calculateScore(): Int {
@@ -16,6 +18,22 @@ fun calculateScore(): Int {
         val first = rucksackList.subList(0, mid)
         val second = rucksackList.subList(mid, rucksackList.size)
         duplicated.addAll(first.intersect(second.toSet()))
+    }
+
+    return scoreDuplicated(duplicated)
+}
+
+fun calculateGroupScore(): Int {
+    val duplicated = mutableListOf<Char>()
+    val rucksacks = readInputFile("day3").split(System.lineSeparator())
+    for ((i, rucksack) in rucksacks.withIndex()) {
+        if (i % 3 != 0) {
+            continue
+        }
+        val first = rucksack.toList()
+        val second = rucksacks[i + 1].toList()
+        val third = rucksacks[i + 2].toList()
+        duplicated.addAll(first.intersect(second.toSet()).intersect(third.toSet()))
     }
 
     return scoreDuplicated(duplicated)

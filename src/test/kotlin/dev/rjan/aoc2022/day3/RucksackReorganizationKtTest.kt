@@ -8,5 +8,10 @@ class RucksackReorganizationKtTest {
     fun day3() {
         assertEquals(157, calculateScore())
     }
+
+    @Test
+    fun part2() {
+        assertEquals(70, calculateGroupScore())
+    }
 }
 
