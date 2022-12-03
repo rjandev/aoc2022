@@ -8,5 +8,10 @@ internal class RockPaperScissorsKtTest {
     fun day2(): Unit {
         assertEquals(15, calculateScore())
     }
+
+    @Test
+    fun day2Part2(): Unit {
+        assertEquals(12, calculateScore())
+    }
 }
 
