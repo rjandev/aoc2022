@@ -8,41 +8,30 @@ fun main() {
     print(part2())
 }
 
-fun part1(): Int {
-    var result = 0
-    val groups = readInputFile("day4").split(System.lineSeparator())
-    for (group in groups) {
-        val split = group.split(",")
-        val first = split[0]
-        val second = split[1]
-        val firstList = parse(first)
-        val secondList = parse(second)
-        if (firstList.containsAll(secondList) || secondList.containsAll(firstList)) {
-            result++
-        }
-    }
-    return result
+fun part1(): Long {
+    return readInputFile("day4").split(System.lineSeparator())
+        .stream().map { parseGroup(it) }
+        .filter { it.first.containsAll(it.second) || it.second.containsAll(it.first) }
+        .count()
 }
 
-fun parse(item: String): List<Int> {
+fun part2(): Long {
+    return readInputFile("day4").split(System.lineSeparator())
+        .stream().map { parseGroup(it) }
+        .filter { it.first.any { inner -> inner in it.second } }
+        .count()
+}
+
+private fun parseGroup(group: String): Pair<List<Int>, List<Int>> {
+    val split = group.split(",")
+    val first = parseAssignment(split[0])
+    val second = parseAssignment(split[1])
+    return Pair(first, second)
+}
+
+fun parseAssignment(item: String): List<Int> {
     val split = item.split("-")
     return (split[0].toInt()..split[1].toInt()).toList()
-}
-
-fun part2(): Int {
-    var result = 0
-    val groups = readInputFile("day4").split(System.lineSeparator())
-    for (group in groups) {
-        val split = group.split(",")
-        val first = split[0]
-        val second = split[1]
-        val firstList = parse(first)
-        val secondList = parse(second)
-        if (firstList.any { it in secondList }) {
-            result++
-        }
-    }
-    return result
 }
 
 
