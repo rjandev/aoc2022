@@ -12,5 +12,6 @@ class SupplyStacksKtTest {
 
     @Test
     fun day5part2() {
+        assertEquals("MCD", part2())
     }
 }
