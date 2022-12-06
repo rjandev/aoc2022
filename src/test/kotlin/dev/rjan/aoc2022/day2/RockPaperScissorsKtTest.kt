@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 internal class RockPaperScissorsKtTest {
     @Test
     fun day2(): Unit {
-        assertEquals(15, calculateScore())
+        assertEquals(15, part1())
     }
 
     @Test
