@@ -12,5 +12,6 @@ class NoSpaceLeftOnDeviceKtTest {
 
     @Test
     fun day6part2() {
+        assertEquals(24_933_642, part2())
     }
 }

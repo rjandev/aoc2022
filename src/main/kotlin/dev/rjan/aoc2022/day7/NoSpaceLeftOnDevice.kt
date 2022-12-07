@@ -60,7 +60,16 @@ private fun toPath(folderStack: Stack<String>) =
     folderStack.joinToString(separator = "/") { it.toString() }.removePrefix("/")
 
 
-fun part2(): Int {
-    val input = readInputFile("day6")
-    return 1
+fun part2(): Long {
+    val input = readInputFile("day7")
+    val lines = input.split(System.lineSeparator())
+    val sizes = parseFolders(lines)
+
+    val totalSpace = 70_000_000
+    val neededSpace = 30_000_000
+    val usedSpace = sizes[""]!!
+    val freeSpace = totalSpace - usedSpace
+    val missingSpace = neededSpace - freeSpace
+
+    return sizes.values.filter { it >= missingSpace }.min()
 }
