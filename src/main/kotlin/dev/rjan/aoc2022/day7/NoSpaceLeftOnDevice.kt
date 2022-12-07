@@ -23,27 +23,25 @@ fun part1(): Long {
     return sum
 }
 
+fun part2(): Long {
+    val input = readInputFile("day7")
+    val lines = input.split(System.lineSeparator())
+    val sizes = parseFolders(lines)
+
+    val totalSpace = 70_000_000
+    val neededSpace = 30_000_000
+    val usedSpace = sizes["/"]!!
+    val freeSpace = totalSpace - usedSpace
+    val missingSpace = neededSpace - freeSpace
+
+    return sizes.values.filter { it >= missingSpace }.min()
+}
+
 private fun parseFolders(lines: List<String>): MutableMap<String, Long> {
     val folderSize = mutableMapOf<String, Long>()
     val folderStack = Stack<String>()
     for (line in lines) {
-        if (line.startsWith("$")) {
-            if (line.startsWith("$ cd")) {
-                if (!line.endsWith("..")) {
-                    folderStack.push(line.split(" ")[2])
-                } else {
-                    val currentDirSize = folderSize[toPath(folderStack)]
-                    folderStack.pop()
-                    folderSize[toPath(folderStack)] =
-                        (folderSize[toPath(folderStack)] ?: 0) + (currentDirSize ?: 0)
-                }
-            }
-        } else {
-            if (!line.startsWith("dir")) {
-                folderSize.putIfAbsent(toPath(folderStack), 0)
-                folderSize[toPath(folderStack)] = folderSize[toPath(folderStack)]!! + line.split(" ")[0].toLong()
-            }
-        }
+        parseLine(line, folderStack, folderSize)
     }
 
     while (folderStack.size > 1) {
@@ -56,20 +54,31 @@ private fun parseFolders(lines: List<String>): MutableMap<String, Long> {
     return folderSize
 }
 
-private fun toPath(folderStack: Stack<String>) =
-    folderStack.joinToString(separator = "/") { it.toString() }.removePrefix("/")
+private fun parseLine(
+    line: String,
+    folderStack: Stack<String>,
+    folderSize: MutableMap<String, Long>
+) {
+    if (line.startsWith("$")) {
+        if (line.startsWith("$ cd")) {
+            if (!line.endsWith("..")) {
+                folderStack.push(line.split(" ")[2])
+            } else {
+                val currentDirSize = folderSize[toPath(folderStack)]
+                folderStack.pop()
+                folderSize[toPath(folderStack)] =
+                    (folderSize[toPath(folderStack)] ?: 0) + (currentDirSize ?: 0)
+            }
+        }
+    } else {
+        if (!line.startsWith("dir")) {
+            folderSize.putIfAbsent(toPath(folderStack), 0)
+            folderSize[toPath(folderStack)] = folderSize[toPath(folderStack)]!! + line.split(" ")[0].toLong()
+        }
+    }
+}
 
-
-fun part2(): Long {
-    val input = readInputFile("day7")
-    val lines = input.split(System.lineSeparator())
-    val sizes = parseFolders(lines)
-
-    val totalSpace = 70_000_000
-    val neededSpace = 30_000_000
-    val usedSpace = sizes[""]!!
-    val freeSpace = totalSpace - usedSpace
-    val missingSpace = neededSpace - freeSpace
-
-    return sizes.values.filter { it >= missingSpace }.min()
+private fun toPath(folderStack: Stack<String>) = when (folderStack.size) {
+    1 -> folderStack.firstElement()
+    else -> folderStack.joinToString(separator = "/") { it.toString() }.removePrefix("/")
 }
