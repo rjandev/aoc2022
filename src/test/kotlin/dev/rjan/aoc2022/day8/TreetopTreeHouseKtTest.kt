@@ -12,5 +12,6 @@ class TreetopTreeHouseKtTest {
 
     @Test
     fun day8part2() {
+        assertEquals(8, part2())
     }
 }
