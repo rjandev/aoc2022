@@ -69,7 +69,31 @@ fun part1(): Int {
 }
 
 fun part2(): Int {
-    return 0
+    val input = readInputFile("day9")
+    val knots = mutableListOf<Position>()
+    val visited = mutableSetOf<Position>()
+    visited.add(Position(0, 0))
+
+    for (n in 0..9) {
+        knots.add(Position(0, 0))
+    }
+
+    val commands = input.lineSequence().map(::Command).toList()
+    for (command in commands) {
+        for (n in 0 until command.stepCount) {
+            moveHead(command, knots)
+            for ((index, _) in knots.withIndex()) {
+                if (index == 0) {
+                    continue // this is the head
+                }
+                moveTail(index - 1, index, knots)
+                if (index == 9) {
+                    visited.add(knots[index]) // visit tail position
+                }
+            }
+        }
+    }
+    return visited.size
 }
 
 fun moveTail(headIndex: Int, tailIndex: Int, knots: MutableList<Position>) {
