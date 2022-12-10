@@ -7,11 +7,11 @@ class RopeBridgeKtTest {
 
     @Test
     fun day9part1() {
-        assertEquals(13, part1())
+        assertEquals(88, part1())
     }
 
     @Test
     fun day9part2() {
-        assertEquals(1, part2())
+        assertEquals(36, part2())
     }
 }

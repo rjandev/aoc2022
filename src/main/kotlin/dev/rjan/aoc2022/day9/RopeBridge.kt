@@ -9,163 +9,128 @@ fun main() {
     print(part2())
 }
 
+class Position(var x: Int, var y: Int) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Position
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x
+        result = 31 * result + y
+        return result
+    }
+}
+
+enum class Direction {
+    UP, DOWN, LEFT, RIGHT;
+
+    companion object {
+        fun parse(value: String): Direction = when (value) {
+            "U" -> UP
+            "D" -> DOWN
+            "L" -> LEFT
+            "R" -> RIGHT
+            else -> throw IllegalArgumentException()
+        }
+    }
+}
+
+class Command(val direction: Direction, val stepCount: Int) {
+    constructor(input: String) : this(Direction.parse(input.split(" ")[0]), input.split(" ")[1].toInt())
+
+}
+
 fun part1(): Int {
     val input = readInputFile("day9")
-    val visited = mutableListOf<Pair<Int, Int>>()
+    val knots = mutableListOf<Position>()
+    val visited = mutableSetOf<Position>()
+    visited.add(Position(0, 0))
 
-    var headX = 0
-    var headY = 0
-    var tailX = 0
-    var tailY = 0
-    visit(headX, headY, visited)
-    val commands = input.lineSequence().toList()
+    knots.add(Position(0, 0)) // head
+    knots.add(Position(0, 0)) // tail
+
+    val commands = input.lineSequence().map(::Command).toList()
     for (command in commands) {
-        val split = command.split(" ")
-        val stepCount = split[1].toInt()
-        for (n in 0 until stepCount) {
-            when (split[0]) {
-                "R" -> headX++
-                "L" -> headX--
-                "U" -> headY++
-                "D" -> headY--
-            }
-            if (isNeighbour(headX, tailX, headY, tailY)) {
-                continue
-            }
-            if (headX == tailX && headY == tailY) {
-                // HEAD overlaps TAIL FIXME
-                println("head overlaps tail")
-            } else if (headX == tailX || headY == tailY) {
-                // only moved on X or Y axis
-                when (split[0]) {
-                    "R" -> tailX++
-                    "L" -> tailX--
-                    "U" -> tailY++
-                    "D" -> tailY--
-                }
-            } else {
-                // diagonal moves
-                when (split[0]) {
-                    "R" -> if (headY > tailY) {
-                        tailY++; tailX++
-                    } else {
-                        tailY--; tailX++
-                    }
-
-                    "L" -> if (headY > tailY) {
-                        tailY++; tailX--
-                    } else {
-                        tailY--; tailX--
-                    }
-
-                    "U" -> if (headX > tailX) {
-                        tailX++; tailY++
-                    } else {
-                        tailX--; tailY++
-                    }
-
-                    "D" -> if (headX > tailX) {
-                        tailX++; tailY--
-                    } else {
-                        tailX--; tailY--
-                    }
-                }
-            }
-            visit(tailX, tailY, visited)
+        for (n in 0 until command.stepCount) {
+            moveHead(command, knots)
+            moveTail(0, 1, knots)
+            visited.add(knots[1]) // visit tail position
         }
-
     }
-    return visited.distinct().size
+    return visited.size
 }
+
+fun part2(): Int {
+    return 0
+}
+
+fun moveTail(headIndex: Int, tailIndex: Int, knots: MutableList<Position>) {
+    val head = knots[headIndex]
+    val tail = knots[tailIndex]
+    if (isNeighbour(head.x, tail.x, head.y, tail.y)) {
+        return // head and tail are next to each other
+    }
+    if (head.x == tail.x && head.y == tail.y) {
+        return // head and tail overlap
+    }
+    knots[tailIndex] = moveOneStepTowardsHead(head, tail)
+}
+
+fun moveOneStepTowardsHead(head: Position, tail: Position): Position {
+    // x-axis only
+    if (head.y == tail.y) {
+        return if (head.x > tail.x) {
+            Position(tail.x + 1, tail.y)
+        } else {
+            Position(tail.x - 1, tail.y)
+        }
+    }
+    // y-axis only
+    if (head.x == tail.x) {
+        return if (head.y > tail.y) {
+            Position(tail.x, tail.y + 1)
+        } else {
+            Position(tail.x, tail.y - 1)
+        }
+    }
+    // diagonal moves
+    return if (head.x > tail.x) {
+        if (head.y > tail.y) {
+            Position(tail.x + 1, tail.y + 1)
+        } else {
+            Position(tail.x + 1, tail.y - 1)
+        }
+    } else {
+        if (head.y > tail.y) {
+            Position(tail.x - 1, tail.y + 1)
+        } else {
+            Position(tail.x - 1, tail.y - 1)
+        }
+    }
+}
+
 
 private fun isNeighbour(x1: Int, x2: Int, y1: Int, y2: Int) =
     x1.minus(x2).absoluteValue == 1 && y1.minus(y2).absoluteValue == 1 ||
             x1.minus(x2).absoluteValue == 1 && y1 == y2 ||
             y1.minus(y2).absoluteValue == 1 && x1 == x2
 
-private fun visit(
-    x: Int,
-    y: Int,
-    visited: MutableList<Pair<Int, Int>>
+private fun moveHead(
+    command: Command,
+    knots: MutableList<Position>
 ) {
-    if (visited.contains(Pair(x, y))) {
-        return
+    when (command.direction) {
+        Direction.UP -> knots[0].y++
+        Direction.DOWN -> knots[0].y--
+        Direction.LEFT -> knots[0].x--
+        Direction.RIGHT -> knots[0].x++
     }
-    visited.add(Pair(x, y))
-}
-
-fun part2(): Int {
-    val input = readInputFile("day9")
-    val visited = mutableListOf<Pair<Int, Int>>()
-    visit(0, 0, visited)
-
-    val knots = mutableListOf<Pair<Int, Int>>()
-    for (knot in 0..9) {
-        knots.add(knot, Pair(0, 0))
-    }
-    val commands = input.lineSequence().toList()
-    for (command in commands) {
-        val split = command.split(" ")
-        val stepCount = split[1].toInt()
-        for (n in 0 until stepCount) {
-            when (split[0]) {
-                "R" -> knots[0] = Pair(knots[0].first + 1, knots[0].second)
-                "L" -> knots[0] = Pair(knots[0].first - 1, knots[0].second)
-                "U" -> knots[0] = Pair(knots[0].first, knots[0].second + 1)
-                "D" -> knots[0] = Pair(knots[0].first, knots[0].second - 1)
-            }
-            for (x in 1..9) {
-
-                val headX = knots[x - 1].first
-                val headY = knots[x - 1].second
-                if (isNeighbour(headX, knots[x].first, headY, knots[x].second)) {
-                    continue
-                }
-                if (headX == knots[x].first && headY == knots[x].second) {
-                    // HEAD overlaps TAIL FIXME
-                    println("head overlaps tail")
-                } else if (headX == knots[x].first || headY == knots[x].second) {
-                    // only moved on X or Y axis
-                    when (split[0]) {
-                        "R" -> knots[x] = Pair(knots[x].first + 1, knots[x].second)
-                        "L" -> knots[x] = Pair(knots[x].first - 1, knots[x].second)
-                        "U" -> knots[x] = Pair(knots[x].first, knots[x].second + 1)
-                        "D" -> knots[x] = Pair(knots[x].first, knots[x].second - 1)
-                    }
-                } else {
-                    // diagonal moves
-                    when (split[0]) {
-                        "R" -> if (headY > knots[x].second) {
-                            knots[x] = Pair(knots[x].first + 1, knots[x].second + 1)
-                        } else {
-                            knots[x] = Pair(knots[x].first + 1, knots[x].second - 1)
-                        }
-
-                        "L" -> if (headY > knots[x].second) {
-                            knots[x] = Pair(knots[x].first - 1, knots[x].second + 1)
-                        } else {
-                            knots[x] = Pair(knots[x].first - 1, knots[x].second - 1)
-                        }
-
-                        "U" -> if (headX > knots[x].first) {
-                            knots[x] = Pair(knots[x].first + 1, knots[x].second + 1)
-                        } else {
-                            knots[x] = Pair(knots[x].first - 1, knots[x].second + 1)
-                        }
-
-                        "D" -> if (headX > knots[x].first) {
-                            knots[x] = Pair(knots[x].first + 1, knots[x].second - 1)
-                        } else {
-                            knots[x] = Pair(knots[x].first - 1, knots[x].second - 1)
-                        }
-                    }
-                }
-                if (x == 9) {
-                    visit(knots[x].first, knots[x].second, visited)
-                }
-            }
-
-        }
-    }
-    return visited.distinct().size
 }
