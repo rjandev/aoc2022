@@ -38,6 +38,39 @@ fun part1(): Int {
     return sum
 }
 
-fun part2(): Int {
-    TODO("Not yet implemented")
+fun part2(): List<List<String>> {
+    var x = 1
+    var cycle = 0
+    val instructions = readInputFile("day10").split(System.lineSeparator())
+    val screen = mutableListOf<MutableList<String>>()
+    for (row in 0..5) {
+        screen.add(mutableListOf())
+    }
+
+    for (instruction in instructions) {
+        for (n in 0..1) {
+            val row = cycle / 40
+            val pixel = when (x) {
+                cycle - (row * 40) -> "#"
+                cycle - (row * 40) + 1 -> "#"
+                cycle - (row * 40) - 1 -> "#"
+                else -> "."
+            }
+            screen[row].add(pixel)
+            cycle++
+            if (instruction.equals("noop")) {
+                break
+            }
+        }
+        if (instruction.equals("noop")) {
+            continue
+        }
+        val value = instruction.split(" ")
+        x += value[1].toInt()
+    }
+    for (row in 0..5) {
+        println(screen[row])
+    }
+    return screen
+
 }

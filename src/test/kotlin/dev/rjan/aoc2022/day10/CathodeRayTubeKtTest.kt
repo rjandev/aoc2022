@@ -12,5 +12,15 @@ class CathodeRayTubeKtTest {
 
     @Test
     fun day10part2() {
+        val expected = """
+            ##..##..##..##..##..##..##..##..##..##..
+            ###...###...###...###...###...###...###.
+            ####....####....####....####....####....
+            #####.....#####.....#####.....#####.....
+            ######......######......######......####
+            #######.......#######.......#######.....
+        """.trimIndent().split(System.lineSeparator()).toList()
+
+        assertEquals(expected, part2().map { it.joinToString(separator = "") })
     }
 }
