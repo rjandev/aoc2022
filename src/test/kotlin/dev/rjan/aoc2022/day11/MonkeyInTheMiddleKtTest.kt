@@ -7,10 +7,11 @@ class MonkeyInTheMiddleKtTest {
 
     @Test
     fun day10part1() {
-        assertEquals(10605, part1())
+        assertEquals(10605L, part1())
     }
 
     @Test
     fun day10part2() {
+        assertEquals(2713310158L, part2())
     }
 }
