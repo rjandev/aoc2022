@@ -16,207 +16,66 @@ fun part1(): Int {
         .map { it.chunked(1) }
         .map { it.stream().map { inner -> Pair(inner, AtomicBoolean(false)) }.toList() }
         .toList()
-    val edgeCount = countEdgeTrees(grid)
-    val otherTrees = countTrees(grid)
 
-    for (pairs in grid) {
-        println(pairs.stream().map { it.first + if (it.second.get()) "T" else "F" }.toList())
-    }
+    markEdgeTreesVisible(grid)
+    calculateScenicScore(grid)
 
-    val visibleTrees = grid.stream().flatMap { it.stream() }.filter { it.second.get() }.count().toInt()
-    val countedVisibleTrees = edgeCount + otherTrees
-    return visibleTrees
-}
-
-fun countTrees(grid: List<List<Pair<String, AtomicBoolean>>>): Int {
-    var treeCount = 0
-    for ((rowIndex, row) in grid.withIndex()) {
-        if (rowIndex == 0 || rowIndex == grid.size - 1) {
-            continue
-        }
-        for ((columnIndex, column) in row.withIndex()) {
-            if (columnIndex == 0 || columnIndex == row.size - 1) {
-                continue
-            }
-            // above
-            val above = grid[rowIndex - 1][columnIndex]
-            if (false && above.second.get()) {
-                if (above.first.toInt() < column.first.toInt()) {
-//                    column.second.set(true)
-                    treeCount++
-                    continue
-                }
-            } else {
-                var isHidden = false
-                for (i in 0 until rowIndex) {
-                    val c = grid[i][columnIndex]
-                    if (c.first.toInt() >= column.first.toInt()) {
-                        isHidden = true
-                        break
-                    }
-                }
-                if (!isHidden) {
-                    treeCount++
-                    column.second.set(true)
-                }
-            }
-            // below
-            val below = grid[rowIndex + 1][columnIndex]
-            if (false && below.second.get()) {
-                if (below.first.toInt() < column.first.toInt()) {
-//                    column.second.set(true)
-                    treeCount++
-                    continue
-                }
-            } else {
-                var isHidden = false
-                for (i in rowIndex + 1 until grid.size) {
-                    val c = grid[i][columnIndex]
-                    if (c.first.toInt() >= column.first.toInt()) {
-                        isHidden = true
-                        break
-                    }
-                }
-                if (!isHidden) {
-                    treeCount++
-                    column.second.set(true)
-                }
-
-            }
-            // left
-            val left = grid[rowIndex][columnIndex - 1]
-            if (false && left.second.get()) {
-                if (left.first.toInt() < column.first.toInt()) {
-//                    column.second.set(true)
-                    treeCount++
-                    continue
-                }
-            } else {
-                var isHidden = false
-                for (i in 0 until columnIndex) {
-                    val c = grid[rowIndex][i]
-                    if (c.first.toInt() >= column.first.toInt()) {
-                        isHidden = true
-                        break
-                    }
-                }
-                if (!isHidden) {
-                    treeCount++
-                    column.second.set(true)
-                }
-            }
-            // right
-            val right = grid[rowIndex][columnIndex + 1]
-            if (false && right.second.get()) {
-                if (right.first.toInt() < column.first.toInt()) {
-//                    column.second.set(true)
-                    treeCount++
-                    continue
-                }
-            } else {
-                var isHidden = false
-                for (i in columnIndex + 1 until row.size) {
-                    val c = grid[rowIndex][i]
-                    if (c.first.toInt() >= column.first.toInt()) {
-                        isHidden = true
-                        break
-                    }
-                }
-                if (!isHidden) {
-                    treeCount++
-                    column.second.set(true)
-                }
-            }
-        }
-    }
-    return treeCount
-}
-
-fun countEdgeTrees(grid: List<List<Pair<String, AtomicBoolean>>>): Int {
-    var top = 0
-    var bottom = 0
-    var left = 0
-    var right = 0
-    for (column in grid[0]) {
-        top++
-        column.second.set(true)
-    }
-    for (column in grid[grid.size - 1]) {
-        bottom++
-        column.second.set(true)
-    }
-    for ((rowIndex, row) in grid.withIndex()) {
-        for ((columnIndex, column) in row.withIndex()) {
-            if (rowIndex == 0 || rowIndex == grid.size - 1 || (columnIndex != 0 && columnIndex != row.size - 1)) {
-                continue
-            }
-            if (columnIndex == 0) {
-                left++
-                column.second.set(true)
-            }
-            if (columnIndex == row.size - 1) {
-                right++
-                column.second.set(true)
-            }
-        }
-    }
-    return top + bottom + left + right
+    return grid.stream().flatMap { it.stream() }.filter { it.second.get() }.count().toInt()
 }
 
 fun part2(): Int {
     val input = readInputFile("day8")
-    val grid = input.split(System.lineSeparator())
-        .map { it.chunked(1) }
-        .map { it.stream().map { inner -> Pair(inner, AtomicBoolean(false)) }.toList() }
-        .toList()
-    val treeScore = calculateScenticScore(grid)
+    val grid = input.split(System.lineSeparator()).map { it.chunked(1) }
+        .map { it.stream().map { inner -> Pair(inner, AtomicBoolean(false)) }.toList() }.toList()
 
-
-    return treeScore
+    return calculateScenicScore(grid)
 }
 
-fun calculateScenticScore(grid: List<List<Pair<String, AtomicBoolean>>>): Int {
-    var score = 0
+/**
+ * Checks whether the given tree is visible in the given range. The return value is the number of
+ * passed trees between the given tree and the next equally big or bigger tree or the edge.
+ *
+ * @param tree the tree to mark as visible
+ * @param valueFunc function to determine the trees around this tree
+ * @param intRange the range of trees to check
+ * @return number of passed trees
+ */
+private fun markTreeVisible(
+    tree: Pair<String, AtomicBoolean>, valueFunc: (i: Int) -> Pair<String, AtomicBoolean>, intRange: IntProgression
+): Int {
+    var count = 0
+    for (i in intRange) {
+        val c = valueFunc.invoke(i)
+        count++
+        if (c.first.toInt() >= tree.first.toInt()) {
+            return count
+        }
+    }
+    tree.second.set(true)
+    return count
+}
 
+fun markEdgeTreesVisible(grid: List<List<Pair<String, AtomicBoolean>>>) {
     for ((rowIndex, row) in grid.withIndex()) {
         for ((columnIndex, column) in row.withIndex()) {
-            var topDistance = 0
-            var bottomDistance = 0
-            var leftDistance = 0
-            var rightDistance = 0
-            // above
-            for (i in (0 until rowIndex).reversed()) {
-                val c = grid[i][columnIndex]
-                topDistance = rowIndex - i
-                if (c.first.toInt() >= column.first.toInt()) {
-                    break
-                }
+            if (rowIndex != 0 && rowIndex != grid.size - 1 && columnIndex != 0 && columnIndex != row.size - 1) {
+                continue
             }
-            // below
-            for (i in rowIndex + 1 until grid.size) {
-                val c = grid[i][columnIndex]
-                bottomDistance = i - rowIndex
-                if (c.first.toInt() >= column.first.toInt()) {
-                    break
-                }
-            }
+            column.second.set(true)
+        }
+    }
+}
 
-            // left
-            for (i in (0 until columnIndex).reversed()) {
-                val c = grid[rowIndex][i]
-                leftDistance = columnIndex - i
-                if (c.first.toInt() >= column.first.toInt()) {
-                    break
-                }
-            }
-            // right
-            for (i in columnIndex + 1 until row.size) {
-                val c = grid[rowIndex][i]
-                rightDistance = i - columnIndex
-                if (c.first.toInt() >= column.first.toInt()) {
-                    break
-                }
-            }
+fun calculateScenicScore(grid: List<List<Pair<String, AtomicBoolean>>>): Int {
+    var score = 0
+    for ((rowIndex, row) in grid.withIndex()) {
+        for ((columnIndex, column) in row.withIndex()) {
+            // above
+            val topDistance = markTreeVisible(column, { grid[it][columnIndex] }, (0 until rowIndex).reversed())
+            val bottomDistance = markTreeVisible(column, { grid[it][columnIndex] }, rowIndex + 1 until grid.size)
+            val leftDistance = markTreeVisible(column, { grid[rowIndex][it] }, (0 until columnIndex).reversed())
+            val rightDistance = markTreeVisible(column, { grid[rowIndex][it] }, columnIndex + 1 until row.size)
+
             val newScore = topDistance * bottomDistance * leftDistance * rightDistance
             if (newScore > score) {
                 score = newScore
