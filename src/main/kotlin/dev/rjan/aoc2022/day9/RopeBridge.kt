@@ -9,45 +9,6 @@ fun main() {
     print(part2())
 }
 
-class Position(var x: Int, var y: Int) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Position
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x
-        result = 31 * result + y
-        return result
-    }
-}
-
-enum class Direction {
-    UP, DOWN, LEFT, RIGHT;
-
-    companion object {
-        fun parse(value: String): Direction = when (value) {
-            "U" -> UP
-            "D" -> DOWN
-            "L" -> LEFT
-            "R" -> RIGHT
-            else -> throw IllegalArgumentException()
-        }
-    }
-}
-
-class Command(val direction: Direction, val stepCount: Int) {
-    constructor(input: String) : this(Direction.parse(input.split(" ")[0]), input.split(" ")[1].toInt())
-
-}
-
 fun part1(): Int {
     val input = readInputFile("day9")
     val knots = mutableListOf<Position>()
@@ -99,53 +60,26 @@ fun part2(): Int {
 fun moveTail(headIndex: Int, tailIndex: Int, knots: MutableList<Position>) {
     val head = knots[headIndex]
     val tail = knots[tailIndex]
-    if (isNeighbour(head.x, tail.x, head.y, tail.y)) {
+    if (isNeighbour(head, tail)) {
         return // head and tail are next to each other
     }
-    if (head.x == tail.x && head.y == tail.y) {
+    if (head == tail) {
         return // head and tail overlap
     }
     knots[tailIndex] = moveOneStepTowardsHead(head, tail)
 }
 
 fun moveOneStepTowardsHead(head: Position, tail: Position): Position {
-    // x-axis only
-    if (head.y == tail.y) {
-        return if (head.x > tail.x) {
-            Position(tail.x + 1, tail.y)
-        } else {
-            Position(tail.x - 1, tail.y)
-        }
-    }
-    // y-axis only
-    if (head.x == tail.x) {
-        return if (head.y > tail.y) {
-            Position(tail.x, tail.y + 1)
-        } else {
-            Position(tail.x, tail.y - 1)
-        }
-    }
-    // diagonal moves
-    return if (head.x > tail.x) {
-        if (head.y > tail.y) {
-            Position(tail.x + 1, tail.y + 1)
-        } else {
-            Position(tail.x + 1, tail.y - 1)
-        }
-    } else {
-        if (head.y > tail.y) {
-            Position(tail.x - 1, tail.y + 1)
-        } else {
-            Position(tail.x - 1, tail.y - 1)
-        }
-    }
+    val tailCopy = Position(tail.x, tail.y)
+    tailCopy.x += Integer.signum(head.x.compareTo(tail.x))
+    tailCopy.y += Integer.signum(head.y.compareTo(tail.y))
+    return tailCopy
 }
 
-
-private fun isNeighbour(x1: Int, x2: Int, y1: Int, y2: Int) =
-    x1.minus(x2).absoluteValue == 1 && y1.minus(y2).absoluteValue == 1 ||
-            x1.minus(x2).absoluteValue == 1 && y1 == y2 ||
-            y1.minus(y2).absoluteValue == 1 && x1 == x2
+private fun isNeighbour(a: Position, b: Position) =
+    a.x.minus(b.x).absoluteValue == 1 && a.y.minus(b.y).absoluteValue == 1 ||
+            a.x.minus(b.x).absoluteValue == 1 && a.y == b.y ||
+            a.y.minus(b.y).absoluteValue == 1 && a.x == b.x
 
 private fun moveHead(
     command: Command,
