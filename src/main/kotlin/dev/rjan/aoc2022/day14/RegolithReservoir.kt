@@ -11,44 +11,55 @@ fun main() {
     print(part2())
 }
 
-fun part2(): Any {
-    TODO("Not yet implemented")
-}
-
 fun part1(): Any {
-    val input = readInputFile("day14")
-    val lines = input.split(System.lineSeparator())
-    val coordinates =
-        lines.map { it.split(" -> ") }.map { it.map { it.split(",") }.map { Position(it[0].toInt(), it[1].toInt()) } }
-    val filledCoordinates = mutableSetOf<Position>()
-
-    for (c in coordinates) {
-        fillCoordinates(c, filledCoordinates)
-    }
-    val maxY = filledCoordinates.maxOf { it.y } + 2
-
+    val (filledCoordinates, maxY) = setup()
     var counter = 0
-    while (addSand(filledCoordinates, maxY)) {
+    while (addSand(filledCoordinates, { it.y <= maxY })) {
         counter++
     }
-
     return counter
 }
 
-fun addSand(filledCoordinates: MutableSet<Position>, maxY: Int): Boolean {
+fun part2(): Any {
+    val (filledCoordinates, maxY) = setup()
+    var counter = 0
+    while (addSand(filledCoordinates, { !filledCoordinates.contains(Position(500, 0)) }) { it.y <= maxY }) {
+        counter++
+    }
+    return counter
+}
+
+private fun setup(): Pair<MutableSet<Position>, Int> {
+    val input = readInputFile("day14")
+    val lines = input.split(System.lineSeparator())
+    val coordinates = lines.map { it.split(" -> ") }
+        .map { it.map { it.split(",") }.map { Position(it[0].toInt(), it[1].toInt()) } }
+    val filledCoordinates = mutableSetOf<Position>()
+    for (c in coordinates) {
+        fillCoordinates(c, filledCoordinates)
+    }
+    val maxY = filledCoordinates.maxOf { it.y }
+    return Pair(filledCoordinates, maxY)
+}
+
+fun addSand(
+    filledCoordinates: MutableSet<Position>,
+    sandCondition: (Position) -> Boolean,
+    condition: (Position) -> Boolean = { true }
+): Boolean {
     val current = Position(500, 0)
 
-    while (current.y <= maxY) {
-        if (!filledCoordinates.contains(Position(current.x, current.y + 1))) {
+    while (sandCondition(current)) {
+        if (!filledCoordinates.contains(Position(current.x, current.y + 1)) && condition(current)) {
             current.y++
             continue
         }
-        if (!filledCoordinates.contains(Position(current.x - 1, current.y + 1))) {
+        if (!filledCoordinates.contains(Position(current.x - 1, current.y + 1)) && condition(current)) {
             current.x--
             current.y++
             continue
         }
-        if (!filledCoordinates.contains(Position(current.x + 1, current.y + 1))) {
+        if (!filledCoordinates.contains(Position(current.x + 1, current.y + 1)) && condition(current)) {
             current.x++
             current.y++
             continue

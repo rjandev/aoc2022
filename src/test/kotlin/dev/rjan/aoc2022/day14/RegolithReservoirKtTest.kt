@@ -12,5 +12,6 @@ class RegolithReservoirKtTest {
 
     @Test
     fun day14part2() {
+        assertEquals(93, part2())
     }
 }
