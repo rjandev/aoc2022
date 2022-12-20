@@ -1,6 +1,7 @@
 package dev.rjan.aoc2022.day9
 
 import dev.rjan.aoc2022.readInputFile
+import dev.rjan.aoc2022.shared.Position
 import kotlin.math.absoluteValue
 
 fun main() {

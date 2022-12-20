@@ -1,6 +1,7 @@
 package dev.rjan.aoc2022.day14
 
 import dev.rjan.aoc2022.readInputFile
+import dev.rjan.aoc2022.shared.Position
 import kotlin.math.max
 import kotlin.math.min
 
