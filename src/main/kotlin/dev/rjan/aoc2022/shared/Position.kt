@@ -1,4 +1,4 @@
-package dev.rjan.aoc2022.day14
+package dev.rjan.aoc2022.shared
 
 class Position(var x: Int, var y: Int) {
     override fun equals(other: Any?): Boolean {
