@@ -12,5 +12,6 @@ class DistressSignalKtTest {
 
     @Test
     fun day13part2() {
+        assertEquals(140, part2())
     }
 }
