@@ -29,6 +29,22 @@ fun part1(): Any {
     return inRightOrder
 }
 
+fun part2(): Any {
+    val pairs = readInputFile("day13").split(System.lineSeparator() + System.lineSeparator())
+        .map { it.split(System.lineSeparator()) }
+        .map { it.map { toPackets(it) } }
+        .flatMap { listOf(it[0], it[1]) }.toMutableList()
+    val dividerTwo = listOf(listOf(2))
+    val dividerSix = listOf(listOf(6))
+    pairs.add(dividerTwo)
+    pairs.add(dividerSix)
+
+    pairs.sortWith(Comparator<List<Any>> { a, b -> compareTo(Pair(a, b)) }.reversed())
+    val indexA = pairs.indexOf(dividerTwo) + 1
+    val indexB = pairs.indexOf(dividerSix) + 1
+    return indexA.times(indexB)
+}
+
 fun isOrdered(packet: Pair<List<Any>, List<Any>>): Boolean {
     return compareTo(packet) >= 0
 }
@@ -81,8 +97,4 @@ private fun compareTo(packet: Pair<Any, Any>): Int {
 
 fun toPackets(line: String): List<Any> {
     return Gson().fromJson<List<Any>>(line, List::class.java)
-}
-
-fun part2(): Any {
-    return 0
 }
