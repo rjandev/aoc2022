@@ -8,7 +8,7 @@ import kotlin.math.abs
 fun main() {
     print(part1(2_000_000))
     println()
-    print(part2())
+    print(part2(0..4_000_000))
 }
 
 data class Sensor(val position: Position, val closestBeacon: Position, val dist: Int) {
@@ -38,18 +38,17 @@ fun part1(at: Int): Any {
     val freePositions = mutableSetOf<Position>()
 
     for (sensor in sensors) {
-        freePositions.addAll(determineFreePositions(at, sensor))
+        determineFreePositions(at, sensor, freePositions)
     }
 
     return freePositions.size
 }
 
-fun part2(): Any {
+fun part2(intRange: IntRange): Any {
     TODO("Not yet implemented")
 }
 
-fun determineFreePositions(atY: Int, sensor: Sensor): Collection<Position> {
-    val result = mutableSetOf<Position>()
+fun determineFreePositions(atY: Int, sensor: Sensor, freePositions: MutableSet<Position>) {
     val sensorPosition = sensor.position
     val manhattanDistance = manhattanDistance(sensorPosition, sensor.closestBeacon)
 
@@ -59,8 +58,7 @@ fun determineFreePositions(atY: Int, sensor: Sensor): Collection<Position> {
             continue
         }
         if (manhattanDistance(sensorPosition, p) <= manhattanDistance) {
-            result.add(p)
+            freePositions.add(p)
         }
     }
-    return result
 }
