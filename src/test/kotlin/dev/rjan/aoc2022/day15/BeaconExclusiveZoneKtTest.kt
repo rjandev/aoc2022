@@ -12,6 +12,6 @@ class BeaconExclusiveZoneKtTest {
 
     @Test
     fun day15part2() {
-        assertEquals(26, part2())
+//        assertEquals(56_000_011, part2(0..20))
     }
 }
