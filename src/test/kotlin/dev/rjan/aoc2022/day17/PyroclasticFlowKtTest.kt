@@ -7,10 +7,11 @@ class PyroclasticFlowKtTest {
 
     @Test
     fun day17part2() {
+        assertEquals(1_514_285_714_288, part2())
     }
 
     @Test
     fun day17part1() {
-        assertEquals(3068, part1())
+        assertEquals(3068L, part1())
     }
 }

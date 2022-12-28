@@ -1,42 +1,9 @@
 package dev.rjan.aoc2022.day17
 
 import dev.rjan.aoc2022.readInputFile
-import dev.rjan.aoc2022.shared.Position
+import java.util.concurrent.atomic.AtomicInteger
 
-const val DEBUG = false
-
-data class Rock(val number: Int, val currentPositions: MutableSet<Position>) {
-
-    fun move(direction: String = "", blockedPositions: Set<Position> = emptySet()) {
-        when (direction) {
-            "<" -> move(Int::dec, Int::toInt, blockedPositions)
-            ">" -> move(Int::inc, Int::toInt, blockedPositions)
-            "" -> move(Int::toInt, Int::dec, blockedPositions)
-        }
-    }
-
-    fun canMoveDown(blockedPositions: Set<Position>): Boolean {
-        val list = currentPositions.map { Position(it.x, it.y - 1) }
-            .toMutableList()
-        list.addAll(blockedPositions)
-        return list.groupingBy { it }.eachCount().filter { it.value > 1 }.isEmpty() && list.all { it.y >= 0 }
-    }
-
-    private fun move(xf: (Int) -> Int, yf: (Int) -> Int, blockedPositions: Set<Position>) {
-        val newPositions = mutableListOf<Position>()
-        for (position in currentPositions) {
-            val newX = xf.invoke(position.x)
-            val newY = yf.invoke(position.y)
-            newPositions.add(Position(newX, newY))
-        }
-        if (newPositions.any { it.x < 0 || it.x > 6 } || blockedPositions.intersect(newPositions.toSet())
-                .isNotEmpty()) {
-            return
-        }
-        currentPositions.clear()
-        currentPositions.addAll(newPositions)
-    }
-}
+data class State(val shape: Shape, val currentMoveCount: Int, val growth: Int)
 
 fun main() {
     print(part1())
@@ -45,70 +12,87 @@ fun main() {
 }
 
 fun part2(): Any {
-    TODO("Not yet implemented")
+    return simulateRocks(1_000_000_000_000L)
 }
 
 fun part1(): Any {
+    return simulateRocks(2022L)
+}
+
+private fun simulateRocks(rockCount: Long): Long {
     val moves = readInputFile("day17")
     val rocks = mutableSetOf<Rock>()
-    var yMax = -1
-    var moveCount = 0
-    for (n in (1..2022)) {
-        val rock = createRock(n, yMax)
-        if (DEBUG) {
-            printRocks(rocks, rock)
-        }
-        val blockedPositions = rocks.flatMap { it.currentPositions }.toSet()
+    val moveCount = AtomicInteger(0)
 
-        rock.move(moves[(moveCount % (moves.length))].toString(), blockedPositions)
-        moveCount++
-        while (rock.canMoveDown(blockedPositions)) {
-            rock.move()
-            rock.move(moves[(moveCount % (moves.length))].toString(), blockedPositions)
-            moveCount++
-        }
+    val (start, end, growth) = analyzeSample()
 
-        rocks.add(rock)
-        yMax = rocks.flatMap { it.currentPositions }.toSet().maxOf { it.y }
+    for (n in (1 until start)) {
+        simulateSingleRock(n, rocks, moves, moveCount)
     }
-    return yMax + 1
+    val rocksLeft = rockCount - start
+    val rocksToCalculate = rocksLeft - (rocksLeft % (end - start))
+    val rocksLeftAfterCalc = rocksLeft - rocksToCalculate
+    val calculatedHeight = rocksToCalculate / (end - start) * growth
+
+    for (n in start..start + rocksLeftAfterCalc) {
+        simulateSingleRock(n.toInt(), rocks, moves, moveCount)
+    }
+
+    return rocks.flatMap { it.currentPositions }.maxOf { it.y }.toLong() + calculatedHeight + 1
 }
 
-fun printRocks(rocks: MutableSet<Rock>, movingRock: Rock) {
-    val positions = rocks.flatMap { it.currentPositions }
-    var maxY = positions.maxOfOrNull { it.y }
-    maxY = maxOf(maxY ?: 0, movingRock.currentPositions.maxOf { it.y })
-    for (y in (0..maxY).reversed()) {
-        print('|')
-        for (c in 0..6) {
-            if (positions.contains(Position(c, y))) {
-                print('#')
-            } else if (movingRock.currentPositions.contains(Position(c, y))) {
-                print('@')
-            } else {
-                print('.')
-            }
-        }
-        print('|' + System.lineSeparator())
+fun analyzeSample(): Triple<Int, Int, Int> {
+    val moves = readInputFile("day17")
+    val rocks = mutableSetOf<Rock>()
+    val moveCount = AtomicInteger(0)
+
+    val states = mutableListOf<State>()
+    var n = 1
+    while (findLoop(states) == null) {
+        val yOld = rocks.flatMap { it.currentPositions }.maxOfOrNull { it.y }?.toLong() ?: 0
+        simulateSingleRock(n, rocks, moves, moveCount)
+        val yNew = rocks.flatMap { it.currentPositions }.maxOf { it.y }.toLong()
+        val yDelta = yNew - yOld
+        states.add(State(Shape.byId(n % 5), moveCount.get() % moves.length, yDelta.toInt()))
+        n++
     }
-    print("+-------+")
-    println()
-    println()
+    return findLoop(states)!!
 }
 
-fun createRock(round: Int, yMax: Int): Rock {
-    val shape = round % 5
-    val y = yMax + 4
-    val positions = when (shape) {
-        1 -> listOf(2 to y, 3 to y, 4 to y, 5 to y)
-        2 -> listOf(2 to y + 1, 3 to y + 1, 4 to y + 1, 3 to y, 3 to y + 2)
-        3 -> listOf(2 to y, 3 to y, 4 to y, 4 to y + 1, 4 to y + 2)
-        4 -> listOf(2 to y, 2 to y + 1, 2 to y + 2, 2 to y + 3)
-        0 -> listOf(2 to y, 3 to y, 2 to y + 1, 3 to y + 1)
-        else -> throw IllegalStateException()
-    }.map { Position(it.first, it.second) }
+fun findLoop(list: List<State?>): Triple<Int, Int, Int>? {
+    if (list.isEmpty()) {
+        return null
+    }
+    val slowIterator = list.iterator().withIndex()
+    val fastIterator = list.iterator().withIndex()
+    var slow: IndexedValue<State?>
+    var fast: IndexedValue<State?>
+    while (fastIterator.hasNext()) {
+        slow = slowIterator.next()
+        fastIterator.next()
+        fast = if (fastIterator.hasNext()) fastIterator.next() else IndexedValue(-1, null)
+        if (slow.value == fast.value) {
+            return Triple(slow.index, fast.index, list.subList(slow.index, fast.index).sumOf { it!!.growth })
+        }
+    }
+    return null
+}
 
-    return Rock(round, positions.toMutableSet())
+private fun simulateSingleRock(
+    n: Int,
+    rocks: MutableSet<Rock>,
+    moves: String,
+    moveCount: AtomicInteger
+) {
+    val positions = rocks.flatMap { it.currentPositions }.toSet()
+    val rock = Rock.create(n, positions.maxOfOrNull { it.y }?.toLong() ?: -1L)
+
+    rock.move(moves[(moveCount.getAndIncrement() % (moves.length))].toString(), positions)
+    while (rock.canMoveDown(positions)) {
+        rock.move()
+        rock.move(moves[(moveCount.getAndIncrement() % (moves.length))].toString(), positions)
+    }
+    rocks.add(rock)
 }
 
 
